@@ -1,4 +1,4 @@
-# ReachPilot — AI Outreach Copilot
+# FirstLine — AI Outreach Copilot
 
 ## Product Overview
 
@@ -14,6 +14,16 @@
 
 **Model:** Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`). Configurable via `LLM_MODEL` env var.
 
+**Domain:** [firstline.to](https://firstline.to)
+
+**Backend URL:** https://firstline-bpg9.onrender.com
+
+**Landing:** https://firstline.to (hosted on Netlify)
+
+**GitHub:** https://github.com/MMikhail1804/firstline
+
+**Chrome Web Store:** submitted for review
+
 ---
 
 ## Project Structure
@@ -24,27 +34,31 @@ outreach-ai/
 │   ├── manifest.json          # Chrome Manifest V3, Side Panel, LinkedIn permissions
 │   ├── content_script.js      # LinkedIn DOM parser + floating button + retry logic
 │   ├── background.js          # Service worker: API proxy, storage (role + sender profile), side panel
-│   ├── sidepanel.html         # Side Panel UI with role selector
+│   ├── sidepanel.html         # Side Panel UI with role selector + feedback link
 │   ├── sidepanel.js           # UI logic (vanilla JS, role-aware, auto-save)
-│   ├── styles.css             # All styles including role selector
+│   ├── styles.css             # All styles including role selector + feedback link
 │   └── icons/
 │       ├── icon.svg           # Source SVG (chat bubble + direction arrow)
 │       ├── icon16.png
 │       ├── icon48.png
 │       └── icon128.png
 ├── backend/
-│   ├── main.py                # FastAPI app + CORS
+│   ├── main.py                # FastAPI app + CORS + /health + /stats
 │   ├── schemas.py             # Pydantic models (with role field)
 │   ├── llm.py                 # Claude API + role-specific prompt templates + JSON extraction
+│   ├── analytics.py           # File-based analytics: log_event + get_stats
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   ├── insights.py        # POST /api/insights (role-aware)
-│   │   └── generate.py        # POST /api/generate (role-aware)
+│   │   ├── insights.py        # POST /api/insights (role-aware, with analytics)
+│   │   └── generate.py        # POST /api/generate (role-aware, with analytics)
 │   ├── requirements.txt
+│   ├── Procfile               # Render deployment: uvicorn start command
 │   ├── .env
 │   └── .env.example
 ├── landing/
-│   └── index.html             # Landing page (self-contained HTML/CSS/JS)
+│   ├── index.html             # Landing page (self-contained HTML/CSS/JS)
+│   └── privacy.html           # Privacy policy page
+├── netlify.toml               # Netlify build config for landing
 ├── .gitignore
 ├── PRODUCT_SPEC.md
 └── ROADMAP.md
@@ -58,6 +72,8 @@ outreach-ai/
 - Backend: Python 3.13, FastAPI, uvicorn
 - LLM: Claude Sonnet 4.5 via Anthropic API
 - Dependencies: fastapi, uvicorn, anthropic, pydantic, python-dotenv
+- Analytics: file-based JSONL logging (`backend/analytics.py`) with `/stats` endpoint
+- Deployment: Render (backend), Netlify (landing)
 
 ---
 
@@ -74,7 +90,47 @@ uvicorn main:app --reload
 
 ### Extension
 1. chrome://extensions/ → Developer mode → Load unpacked → select extension/
-2. Go to any LinkedIn profile → click "ReachPilot" button or extension icon
+2. Go to any LinkedIn profile → click "FirstLine" button or extension icon
+
+---
+
+## Deployment
+
+### Backend (Render)
+- Hosted at https://firstline-bpg9.onrender.com
+- `Procfile` defines the start command: `web: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}`
+- Environment variables set in Render dashboard: `ANTHROPIC_API_KEY`, `LLM_MODEL`
+- Auto-deploys from GitHub repo
+
+### Landing (Netlify)
+- Hosted at https://firstline.to
+- `netlify.toml` configures build: base directory `landing/`, publish `.`, no build command
+- Custom domain `firstline.to` configured via Netlify DNS
+- Privacy policy page at `/privacy.html`
+
+### Domain
+- Domain: `firstline.to`
+- DNS managed via Netlify
+
+### Chrome Web Store
+- Extension submitted for review
+- Listed as "FirstLine — AI Outreach Copilot"
+
+---
+
+## Analytics
+
+`backend/analytics.py` provides simple file-based analytics:
+- Every `/api/insights` and `/api/generate` call is logged to `analytics.jsonl`
+- Each entry includes timestamp, event type, profile name, role, and goal
+- `GET /stats` endpoint returns aggregated stats: total insights, total generates, unique profiles, breakdown by role and goal, and the 10 most recent events
+
+---
+
+## Feedback
+
+- Landing page includes a feedback form via FormSubmit
+- Extension side panel includes a "Send Feedback" link pointing to `https://firstline.to#feedback`
 
 ---
 
@@ -101,6 +157,9 @@ Users select their role once. Everything adapts:
 
 ### GET /health
 Returns `{"status": "ok"}`.
+
+### GET /stats
+Returns aggregated analytics: total insights, total generates, unique profiles, breakdown by role and goal, recent 10 events.
 
 ### POST /api/insights
 Role-aware profile analysis.
@@ -169,7 +228,7 @@ Response:
 
 ```
 1. User opens LinkedIn profile
-2. Clicks floating "ReachPilot" button → Side Panel opens
+2. Clicks floating "FirstLine" button → Side Panel opens
 3. Selects role: Sales / SDR | Recruiter | Founder (saved, one-time)
 4. Fills sender context (auto-saved on generate)
 5. Clicks "Analyze Profile"
@@ -191,7 +250,7 @@ Response:
 Separate INSIGHT_SYSTEM, GENERATE_SYSTEM, and GOAL_CONTEXT per role. Not conditional blocks in one prompt, but completely different prompt templates. Sales looks for pain points; recruiters look for career trajectory; founders look for partnership signals.
 
 ### Short, Human Messages
-Messages are capped at 2-4 sentences / 50 words max. The system prompt enforces this with BAD/GOOD examples showing the difference between a 70-word "copywriter" message and a 30-word "human" message. Rules: no filler, no smooth transitions, fragments OK, start specific, end with question.
+Messages are capped at 50 words max, 2-4 sentences. The system prompt enforces this with BAD/GOOD examples showing the difference between a 70-word "copywriter" message and a 30-word "human" message. The prompt explicitly states: "If your message is longer than 50 words, you have FAILED." Rules: no filler, no smooth transitions, fragments OK, start specific, end with question.
 
 ### Goal-Driven Generation
 CRITICAL GOAL RULES with explicit good/bad CTA examples. `start_conversation` FORBIDS meeting language. `book_demo`/`pitch_role`/`book_meeting` REQUIRE next-step language.
@@ -218,10 +277,11 @@ Modular functions with fallback selectors + heading-text detection for localized
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from analytics import get_stats
 from routes.insights import router as insights_router
 from routes.generate import router as generate_router
 
-app = FastAPI(title="ReachPilot API", version="0.1.0")
+app = FastAPI(title="FirstLine API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -237,6 +297,11 @@ app.include_router(generate_router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/stats")
+async def stats():
+    return get_stats()
 ```
 
 ### backend/schemas.py
@@ -631,11 +696,81 @@ Remember: MAX 50 words per message. 2-4 sentences. Sound human. Return JSON only
     return extract_json(raw)
 ```
 
+### backend/analytics.py
+
+```python
+"""Simple file-based analytics. Logs each API call with timestamp."""
+
+import json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+LOG_FILE = Path(os.getenv("ANALYTICS_LOG", "analytics.jsonl"))
+
+
+def log_event(event: str, data: dict):
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "event": event,
+        **data,
+    }
+    with open(LOG_FILE, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def get_stats() -> dict:
+    if not LOG_FILE.exists():
+        return {"total_insights": 0, "total_generates": 0, "events": []}
+
+    insights = 0
+    generates = 0
+    profiles = set()
+    roles = {}
+    goals = {}
+    recent = []
+
+    for line in LOG_FILE.read_text().splitlines():
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if e["event"] == "insights":
+            insights += 1
+        elif e["event"] == "generate":
+            generates += 1
+
+        name = e.get("profile", "")
+        if name:
+            profiles.add(name)
+
+        role = e.get("role", "")
+        if role:
+            roles[role] = roles.get(role, 0) + 1
+
+        goal = e.get("goal", "")
+        if goal:
+            goals[goal] = goals.get(goal, 0) + 1
+
+        recent.append(e)
+
+    return {
+        "total_insights": insights,
+        "total_generates": generates,
+        "unique_profiles": len(profiles),
+        "by_role": roles,
+        "by_goal": goals,
+        "recent_10": recent[-10:],
+    }
+```
+
 ### backend/routes/insights.py
 
 ```python
 from fastapi import APIRouter, HTTPException
 
+from analytics import log_event
 from llm import generate_insights
 from schemas import InsightRequest, InsightResponse, Insight
 
@@ -650,6 +785,13 @@ async def get_insights(req: InsightRequest):
     try:
         raw_insights = generate_insights(req.profile.model_dump(), role=req.role)
         insights = [Insight(**i) for i in raw_insights]
+
+        log_event("insights", {
+            "profile": req.profile.name,
+            "role": req.role,
+            "insights_count": len(insights),
+        })
+
         return InsightResponse(insights=insights)
     except Exception as e:
         raise HTTPException(502, f"LLM error: {str(e)}")
@@ -660,6 +802,7 @@ async def get_insights(req: InsightRequest):
 ```python
 from fastapi import APIRouter, HTTPException
 
+from analytics import log_event
 from llm import generate_messages
 from schemas import GenerateRequest, GenerateResponse
 
@@ -681,6 +824,13 @@ async def generate(req: GenerateRequest):
             sender_profile=req.sender_profile,
             role=req.role,
         )
+
+        log_event("generate", {
+            "profile": req.profile.name,
+            "role": req.role,
+            "goal": req.goal,
+        })
+
         return GenerateResponse(
             angle=result.get("angle", ""),
             reason=result.get("reason", ""),
@@ -702,14 +852,27 @@ pydantic==2.10.4
 python-dotenv==1.0.1
 ```
 
+### backend/Procfile
+
+```
+web: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+### backend/.env.example
+
+```
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+LLM_MODEL=claude-sonnet-4-5-20250929
+```
+
 ### extension/manifest.json
 
 ```json
 {
   "manifest_version": 3,
-  "name": "ReachPilot — AI Outreach Copilot",
+  "name": "FirstLine — AI Outreach Copilot",
   "version": "0.1.0",
-  "description": "Find the right reason to reach out. Generate personalized outreach sequences from LinkedIn profiles.",
+  "description": "Find the right reason to reach out. Generate personalized LinkedIn outreach that actually feels personal.",
   "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
   "host_permissions": ["https://www.linkedin.com/*"],
   "side_panel": {
@@ -958,11 +1121,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 // ── Floating button ──
 
 function injectFloatingButton() {
-  if (document.getElementById("reachpilot-fab")) return;
+  if (document.getElementById("firstline-fab")) return;
 
   const btn = document.createElement("button");
-  btn.id = "reachpilot-fab";
-  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>ReachPilot</span>`;
+  btn.id = "firstline-fab";
+  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>FirstLine</span>`;
 
   Object.assign(btn.style, {
     position: "fixed",
@@ -1006,7 +1169,7 @@ function injectFloatingButton() {
 
 setInterval(() => {
   const onProfile = window.location.pathname.startsWith("/in/");
-  const btnExists = document.getElementById("reachpilot-fab");
+  const btnExists = document.getElementById("firstline-fab");
 
   if (onProfile && !btnExists) {
     injectFloatingButton();
@@ -1019,7 +1182,7 @@ setInterval(() => {
 ### extension/background.js
 
 ```javascript
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://firstline-bpg9.onrender.com";
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
@@ -1078,7 +1241,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 </head>
 <body>
   <div class="header">
-    <h1>ReachPilot</h1>
+    <h1>FirstLine</h1>
     <p>AI Outreach Copilot</p>
   </div>
 
@@ -1143,6 +1306,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       <button id="resetBtn" class="btn btn-sm" style="margin-top: 12px;">New Profile</button>
     </section>
+
+    <!-- Feedback -->
+    <div class="feedback-link">
+      <a href="https://firstline.to#feedback" target="_blank" id="feedbackBtn">Send Feedback</a>
+    </div>
   </div>
 
   <script src="sidepanel.js"></script>
@@ -1714,7 +1882,32 @@ textarea { resize: vertical; }
   line-height: 1.35;
 }
 
+/* Feedback link */
+.feedback-link {
+  text-align: center;
+  padding: 12px 0 4px;
+  border-top: 1px solid #e8e8ef;
+  margin-top: 8px;
+}
+.feedback-link a {
+  font-size: 11px;
+  color: #888;
+  text-decoration: none;
+}
+.feedback-link a:hover {
+  color: #4f46e5;
+}
+
 .hidden { display: none !important; }
+```
+
+### netlify.toml
+
+```toml
+[build]
+  base = "landing"
+  publish = "."
+  command = ""
 ```
 
 ### .gitignore
@@ -1726,6 +1919,7 @@ __pycache__/
 venv/
 node_modules/
 .DS_Store
+analytics.jsonl
 ```
 
 ---
@@ -1743,6 +1937,10 @@ node_modules/
 `landing/index.html` — self-contained single HTML file.
 
 Sections: Hero, Product Preview, Problem, How it Works, Benefits, Differentiator, Trust, CTA, FAQ, Footer.
+
+Privacy policy page at `landing/privacy.html`.
+
+Feedback form on landing page via FormSubmit (accessible from extension via "Send Feedback" link).
 
 ---
 
