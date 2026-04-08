@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://firstline-bpg9.onrender.com";
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
