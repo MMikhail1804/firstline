@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "FirstLine — AI Outreach Copilot",
+  "version": "0.1.0",
+  "description": "Find the right reason to reach out. Generate personalized LinkedIn outreach that actually feels personal.",
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
+  "host_permissions": ["https://www.linkedin.com/*"],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["content_script.js"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

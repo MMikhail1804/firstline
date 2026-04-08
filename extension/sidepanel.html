@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <h1>FirstLine</h1>
+    <p>AI Outreach Copilot</p>
+  </div>
+
+  <div class="container">
+    <!-- Step 0: Role + Sender profile -->
+    <section id="senderSection" class="section">
+      <label class="label">I am a</label>
+      <div class="role-selector" id="roleSelector">
+        <button class="role-btn active" data-role="sales">Sales / SDR</button>
+        <button class="role-btn" data-role="recruiter">Recruiter</button>
+        <button class="role-btn" data-role="founder">Founder</button>
+      </div>
+
+      <label class="label" style="margin-top: 10px;" id="senderLabel">About you / your product</label>
+      <textarea id="senderProfile" rows="3" placeholder="e.g. I sell an AI-powered QA tool that saves engineering teams 10+ hours/week"></textarea>
+      <button id="saveSenderBtn" class="btn btn-sm">Save</button>
+    </section>
+
+    <!-- Step 1: Analyze -->
+    <section class="section">
+      <button id="analyzeBtn" class="btn btn-primary btn-full">Analyze Profile</button>
+      <div id="profileInfo" class="profile-info hidden"></div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <!-- Step 2: Insights -->
+    <section id="insightsSection" class="section hidden">
+      <label class="label">Insights — select what to use</label>
+      <div id="insightsList" class="insights-list"></div>
+    </section>
+
+    <!-- Step 3: Goal + Generate -->
+    <section id="generateSection" class="section hidden">
+      <label class="label">Outreach goal</label>
+      <select id="goalSelect"></select>
+      <button id="generateBtn" class="btn btn-primary btn-full" style="margin-top: 12px;">Generate Messages</button>
+    </section>
+
+    <!-- Step 4: Results -->
+    <section id="resultsSection" class="section hidden">
+      <div id="approachCard" class="approach-card hidden">
+        <div class="approach-main">
+          <span class="approach-label">Approach:</span>
+          <span id="approachAngle"></span>
+        </div>
+        <div id="approachSub" class="approach-sub"></div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="msg1">Initial</button>
+        <button class="tab" data-tab="msg2">Follow-up</button>
+      </div>
+
+      <div id="msg1" class="tab-content active">
+        <textarea id="message1" rows="8" readonly></textarea>
+        <button class="btn btn-copy" data-target="message1">Copy</button>
+      </div>
+
+      <div id="msg2" class="tab-content">
+        <textarea id="message2" rows="8" readonly></textarea>
+        <button class="btn btn-copy" data-target="message2">Copy</button>
+      </div>
+
+      <button id="resetBtn" class="btn btn-sm" style="margin-top: 12px;">New Profile</button>
+    </section>
+
+    <!-- Feedback -->
+    <div class="feedback-link">
+      <a href="https://firstline.ai#feedback" target="_blank" id="feedbackBtn">Send Feedback</a>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

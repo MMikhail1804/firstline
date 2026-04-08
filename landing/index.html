@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FirstLine — AI LinkedIn Outreach Tool for SDRs and Recruiters</title>
+<meta name="description" content="Find the right reason to reach out. FirstLine analyzes LinkedIn profiles, finds personalized angles, and generates cold messages that get replies. Chrome extension for sales, recruiters, and founders.">
+<meta name="keywords" content="LinkedIn outreach tool, AI cold message generator, personalized LinkedIn messages, SDR outreach tool, recruiter LinkedIn tool, cold outreach Chrome extension, LinkedIn message generator, sales outreach AI">
+
+<!-- Open Graph -->
+<meta property="og:title" content="FirstLine — AI LinkedIn Outreach Tool">
+<meta property="og:description" content="Find the right reason to reach out. Analyze LinkedIn profiles, find personalized angles, generate cold messages that get replies.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://firstline.ai">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FirstLine — AI LinkedIn Outreach Tool">
+<meta name="twitter:description" content="Find the right reason to reach out. Generate personalized LinkedIn messages that actually feel personal.">
+
+<link rel="canonical" href="https://firstline.ai">
+
+<!-- Analytics: replace with your Umami/Plausible/GA script after deploy -->
+<!-- <script defer src="https://cloud.umami.is/script.js" data-website-id="YOUR_UMAMI_ID"></script> -->
+
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --indigo: #4f46e5;
+  --purple: #7c3aed;
+  --gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --bg: #fafafa;
+  --bg-white: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #555;
+  --text-muted: #888;
+  --border: #e8e8ef;
+  --radius: 12px;
+  --max-w: 1080px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+p { color: var(--text-secondary); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  text-decoration: none; border: none; cursor: pointer; transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-primary { background: var(--gradient); color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
+.btn-secondary { background: var(--bg-white); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--indigo); color: var(--indigo); }
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,250,250,0.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: var(--max-w); margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo { font-size: 18px; font-weight: 800; color: var(--text); text-decoration: none; }
+.nav-logo span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-cta { padding: 9px 20px; font-size: 13px; border-radius: 8px; }
+
+/* Hero */
+.hero { padding: 80px 0 60px; text-align: center; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: #f0efff; color: var(--indigo); margin-bottom: 24px;
+}
+.hero-badge svg { width: 14px; height: 14px; }
+.hero h1 { margin-bottom: 20px; }
+.hero h1 em { font-style: normal; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-sub { font-size: 18px; max-width: 560px; margin: 0 auto 32px; line-height: 1.6; }
+.hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* Product Preview */
+.preview { padding: 20px 0 80px; }
+.preview-card {
+  max-width: 720px; margin: 0 auto;
+  background: var(--bg-white); border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+}
+.preview-header {
+  padding: 12px 16px; background: var(--gradient); color: #fff;
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+}
+.preview-body { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .preview-body { grid-template-columns: 1fr; } }
+
+.preview-left, .preview-right { display: flex; flex-direction: column; gap: 10px; }
+
+.mock-profile { padding: 12px; background: #f8f7ff; border-radius: 8px; border: 1px solid #e8e5f5; }
+.mock-name { font-weight: 700; font-size: 14px; color: var(--text); }
+.mock-title { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.mock-insight {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 8px 10px; background: #f5f4ff; border-radius: 6px;
+  border: 1px solid #e0ddf0; font-size: 11px; line-height: 1.35; color: var(--text-secondary);
+}
+.mock-check { color: var(--indigo); font-size: 13px; margin-top: 1px; }
+.mock-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--indigo); margin-top: 2px; }
+
+.mock-approach { padding: 8px 10px; border-left: 3px solid var(--indigo); background: #f8f7ff; border-radius: 0 6px 6px 0; }
+.mock-approach-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--indigo); }
+.mock-approach-text { font-size: 11px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+.mock-message {
+  padding: 10px; background: var(--bg-white); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 11px; line-height: 1.45; color: var(--text-secondary); font-style: italic;
+}
+.mock-message-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; font-style: normal; }
+
+/* Problem */
+.problem { padding: 80px 0; }
+.problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+@media (max-width: 600px) { .problem-grid { grid-template-columns: 1fr; } }
+.problem-card { padding: 28px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); }
+.problem-card .icon { font-size: 28px; margin-bottom: 12px; }
+.problem-card h3 { margin-bottom: 8px; }
+.problem-card p { font-size: 14px; line-height: 1.55; }
+
+/* How it works */
+.how { padding: 80px 0; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 40px; }
+@media (max-width: 700px) { .steps { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 450px) { .steps { grid-template-columns: 1fr; } }
+.step { text-align: center; padding: 28px 16px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); }
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--gradient); color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 14px;
+}
+.step h3 { margin-bottom: 6px; }
+.step p { font-size: 13px; }
+
+/* Benefits */
+.benefits { padding: 80px 0; }
+.benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
+@media (max-width: 650px) { .benefits-grid { grid-template-columns: 1fr; } }
+.benefit { padding: 28px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); }
+.benefit-icon {
+  width: 40px; height: 40px; border-radius: 10px; background: #f0efff;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+  color: var(--indigo); font-size: 20px;
+}
+.benefit h3 { margin-bottom: 6px; }
+.benefit p { font-size: 14px; line-height: 1.55; }
+
+/* Differentiator */
+.diff { padding: 80px 0; }
+.diff-inner {
+  max-width: 700px; margin: 0 auto; text-align: center;
+  padding: 48px 40px; background: var(--bg-white); border: 1px solid var(--border); border-radius: 16px;
+}
+.diff-tag {
+  display: inline-block; padding: 5px 12px; border-radius: 6px;
+  background: #f0efff; color: var(--indigo); font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px;
+}
+.diff h2 { margin-bottom: 16px; }
+.diff p { font-size: 16px; max-width: 520px; margin: 0 auto; }
+.diff-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; text-align: left; }
+@media (max-width: 500px) { .diff-compare { grid-template-columns: 1fr; } }
+.diff-col { padding: 16px; border-radius: 8px; }
+.diff-col.old { background: #fef2f2; }
+.diff-col.new { background: #f0efff; }
+.diff-col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px; }
+.diff-col.old .diff-col-label { color: #b91c1c; }
+.diff-col.new .diff-col-label { color: var(--indigo); }
+.diff-col ul { list-style: none; font-size: 13px; }
+.diff-col ul li { padding: 3px 0; color: var(--text-secondary); }
+.diff-col ul li::before { margin-right: 6px; }
+.diff-col.old ul li::before { content: "\2717"; color: #b91c1c; }
+.diff-col.new ul li::before { content: "\2713"; color: var(--indigo); }
+
+/* Trust */
+.trust { padding: 60px 0; }
+.trust-items { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.trust-item { font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.trust-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--indigo); }
+
+/* CTA bottom */
+.cta-bottom { padding: 80px 0; text-align: center; }
+.cta-box {
+  max-width: 600px; margin: 0 auto; padding: 48px 40px;
+  background: var(--gradient); border-radius: 20px; color: #fff;
+}
+.cta-box h2 { color: #fff; margin-bottom: 12px; }
+.cta-box p { color: rgba(255,255,255,0.85); margin-bottom: 28px; }
+.cta-box .btn { background: #fff; color: var(--indigo); font-weight: 700; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+.cta-box .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+/* FAQ */
+.faq { padding: 80px 0; }
+.faq-list { max-width: 640px; margin: 40px auto 0; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  width: 100%; padding: 18px 0; background: none; border: none; cursor: pointer;
+  font-size: 15px; font-weight: 600; color: var(--text); text-align: left;
+  display: flex; justify-content: space-between; align-items: center; font-family: inherit;
+}
+.faq-q::after { content: "+"; font-size: 20px; color: var(--text-muted); transition: transform 0.2s; }
+.faq-item.open .faq-q::after { content: "\2212"; }
+.faq-a { display: none; padding: 0 0 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.faq-item.open .faq-a { display: block; }
+
+/* Feedback form */
+.feedback { padding: 80px 0; }
+.feedback-form {
+  max-width: 480px; margin: 32px auto 0;
+  background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 28px;
+}
+.feedback-form .form-group { margin-bottom: 14px; }
+.feedback-form label {
+  display: block; font-size: 12px; font-weight: 600; color: #666;
+  margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.feedback-form input, .feedback-form textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: inherit; transition: border-color 0.15s;
+}
+.feedback-form input:focus, .feedback-form textarea:focus { outline: none; border-color: var(--indigo); }
+.feedback-form textarea { resize: vertical; min-height: 100px; }
+.feedback-form .btn { width: 100%; justify-content: center; }
+.form-success { display: none; text-align: center; padding: 20px; font-size: 15px; color: var(--indigo); font-weight: 600; }
+
+/* Footer */
+footer { padding: 40px 0; border-top: 1px solid var(--border); text-align: center; }
+footer p { font-size: 13px; color: var(--text-muted); }
+
+/* Helpers */
+.section-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--indigo); margin-bottom: 10px;
+}
+.section-sub { font-size: 16px; max-width: 520px; margin-top: 12px; }
+.text-center { text-align: center; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo"><span>First</span>Line</a>
+    <a href="#cta" class="btn btn-primary nav-cta">Get Early Access</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Chrome Extension for LinkedIn Outreach
+    </div>
+    <h1>Find the right reason<br>to <em>reach out</em></h1>
+    <p class="hero-sub">FirstLine analyzes LinkedIn profiles, finds relevant signals, and generates short outreach messages that actually sound like you wrote them.</p>
+    <div class="hero-ctas">
+      <a href="#cta" class="btn btn-primary">Get Early Access</a>
+      <a href="#how" class="btn btn-secondary">See How It Works</a>
+    </div>
+  </div>
+</section>
+
+<!-- Product Preview -->
+<section class="preview">
+  <div class="container">
+    <div class="preview-card">
+      <div class="preview-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        FirstLine
+      </div>
+      <div class="preview-body">
+        <div class="preview-left">
+          <div class="mock-profile">
+            <div class="mock-name">Sarah Chen</div>
+            <div class="mock-title">Head of Sales at Datadog | Ex-Salesforce</div>
+          </div>
+          <div class="mock-insight">
+            <span class="mock-check">&#10003;</span>
+            <div>
+              <div>New Head of Sales — likely revisiting tooling and process</div>
+              <div class="mock-tag">career move</div>
+            </div>
+          </div>
+          <div class="mock-insight">
+            <span class="mock-check">&#10003;</span>
+            <div>
+              <div>Salesforce + Datadog background = scaling enterprise GTM</div>
+              <div class="mock-tag">expertise signal</div>
+            </div>
+          </div>
+          <div class="mock-approach">
+            <div class="mock-approach-label">Approach</div>
+            <div class="mock-approach-text">new role, new stack</div>
+          </div>
+        </div>
+        <div class="preview-right">
+          <div class="mock-message">
+            <div class="mock-message-label">Initial message</div>
+            Sarah — new Head of Sales at Datadog? We help sales teams keep demos from breaking mid-call. Worth 15 min?
+          </div>
+          <div class="mock-message">
+            <div class="mock-message-label">Follow-up</div>
+            Coming from Salesforce to Datadog, curious if your SDR team's outreach is keeping up with growth. We help personalize at scale.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section class="problem">
+  <div class="container text-center">
+    <div class="section-label">The problem</div>
+    <h2>Cold outreach is broken</h2>
+    <p class="section-sub mx-auto">You either spend hours researching and writing personalized LinkedIn messages — or you use AI tools that produce messages everyone ignores.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">&#9201;</div>
+        <h3>Manual outreach eats your day</h3>
+        <p>Researching each prospect, finding an angle, writing a message from scratch. Multiply that by 30 people a day. The math doesn't work.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">&#128683;</div>
+        <h3>Generic AI messages get ignored</h3>
+        <p>Most AI outreach tools just generate text. No research, no context, no real reason to reach out. Recipients can tell instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how" id="how">
+  <div class="container text-center">
+    <div class="section-label">How it works</div>
+    <h2>Context first. Message second.</h2>
+    <p class="section-sub mx-auto">FirstLine thinks before it writes. That's why the messages sound real.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Open a profile</h3>
+        <p>Visit any LinkedIn profile page</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Find signals</h3>
+        <p>FirstLine identifies real reasons to reach out</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Choose approach</h3>
+        <p>Select the angle that fits your goal</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Get your message</h3>
+        <p>Short, personal, ready to send</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits -->
+<section class="benefits">
+  <div class="container text-center">
+    <div class="section-label">Why FirstLine</div>
+    <h2>Outreach that starts with understanding</h2>
+    <div class="benefits-grid">
+      <div class="benefit">
+        <div class="benefit-icon">&#127919;</div>
+        <h3>Finds the reason to reach out</h3>
+        <p>Surfaces signals like role changes, stated priorities, and expertise patterns — not just job titles.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">&#9997;</div>
+        <h3>Messages that sound human</h3>
+        <p>2-4 sentences. Under 50 words. No generic templates. No "I came across your profile." Just sharp, personal outreach.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">&#9889;</div>
+        <h3>Works for sales, recruiting, and founders</h3>
+        <p>Different roles need different approaches. FirstLine adapts its insights, tone, and goals to how you actually work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Differentiator -->
+<section class="diff">
+  <div class="container">
+    <div class="diff-inner">
+      <div class="diff-tag">Not another AI message generator</div>
+      <h2>Most tools write first.<br>FirstLine thinks first.</h2>
+      <p>The difference between a reply and silence is context — not copywriting.</p>
+      <div class="diff-compare">
+        <div class="diff-col old">
+          <div class="diff-col-label">Generic AI tools</div>
+          <ul>
+            <li>Generate text immediately</li>
+            <li>No profile analysis</li>
+            <li>Same template, different name</li>
+            <li>70+ words, sounds like AI</li>
+          </ul>
+        </div>
+        <div class="diff-col new">
+          <div class="diff-col-label">FirstLine</div>
+          <ul>
+            <li>Finds signals before writing</li>
+            <li>Chooses the best approach</li>
+            <li>Adapts to your role and goal</li>
+            <li>Under 50 words, sounds human</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="trust">
+  <div class="container text-center">
+    <div class="trust-items">
+      <div class="trust-item"><span class="trust-dot"></span> Chrome Extension</div>
+      <div class="trust-item"><span class="trust-dot"></span> Works inside LinkedIn</div>
+      <div class="trust-item"><span class="trust-dot"></span> Built for SDRs, founders, and recruiters</div>
+      <div class="trust-item"><span class="trust-dot"></span> No auto-sending</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-bottom" id="cta">
+  <div class="container">
+    <div class="cta-box">
+      <h2>Ready to stop guessing?</h2>
+      <p>Join early access and start writing outreach that actually gets replies.</p>
+      <a href="#feedback" class="btn">Get Early Access</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="container text-center">
+    <div class="section-label">FAQ</div>
+    <h2>Common questions</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q">Is this a Chrome extension?</button>
+        <div class="faq-a">Yes. FirstLine is a Chrome extension that adds a side panel directly inside LinkedIn. No switching tabs, no copy-pasting between tools. You open a profile, click the button, and get your message right there.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Does it send messages automatically?</button>
+        <div class="faq-a">No. FirstLine generates personalized messages for you to review, edit, and send yourself. You stay in full control of every LinkedIn interaction. We don't automate sending — that's how accounts get banned.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Who is it for?</button>
+        <div class="faq-a">SDRs and account executives doing cold outreach, recruiters sourcing passive candidates on LinkedIn, and founders doing manual outbound for their startups. Anyone who writes LinkedIn messages and wants them to actually get replies.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What makes it different from ChatGPT?</button>
+        <div class="faq-a">ChatGPT generates text from a blank prompt. FirstLine reads the LinkedIn profile first, finds specific reasons to reach out, picks the best approach, and then writes a short message grounded in real context. The result sounds like you did the research — because the AI actually did.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How long are the generated messages?</button>
+        <div class="faq-a">2-4 sentences, under 50 words. Short enough to read in 5 seconds on a phone screen. We intentionally keep messages short because that's what gets replies on LinkedIn — not long pitches.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is there a free version?</button>
+        <div class="faq-a">Early access is free. We'll introduce a Pro plan later with unlimited usage, but early users will get special pricing. Sign up below to get in.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Feedback / Contact Form -->
+<section class="feedback" id="feedback">
+  <div class="container text-center">
+    <div class="section-label">Get in touch</div>
+    <h2>Join early access or send feedback</h2>
+    <p class="section-sub mx-auto">Questions, ideas, bugs — we want to hear it all.</p>
+    <div class="feedback-form">
+      <form id="contactForm" action="https://formsubmit.co/ajax/m.mishchenkov@gmail.com" method="POST">
+        <input type="hidden" name="_subject" value="FirstLine — New Message">
+        <input type="hidden" name="_captcha" value="false">
+        <div class="form-group">
+          <label for="fname">Name</label>
+          <input type="text" id="fname" name="name" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label for="femail">Email</label>
+          <input type="email" id="femail" name="email" placeholder="you@company.com" required>
+        </div>
+        <div class="form-group">
+          <label for="fmessage">Message</label>
+          <textarea id="fmessage" name="message" placeholder="Feedback, question, or just say hi..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </form>
+      <div class="form-success" id="formSuccess">Thanks! We'll get back to you soon.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>FirstLine &mdash; AI Outreach Copilot for LinkedIn</p>
+  </div>
+</footer>
+
+<script>
+// FAQ accordion
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+// Feedback form — submit via AJAX
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const btn = form.querySelector('button[type="submit"]');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(new FormData(form))),
+    });
+
+    if (res.ok) {
+      form.style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    } else {
+      btn.textContent = 'Error — try again';
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
